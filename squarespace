@@ -1,0 +1,143 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+<div id="update"></div>
+<style>
+.carousel .carousel-inner img {
+  width: 100%;
+  height: 38em;
+  object-fit: cover;
+  overflow: hidden;
+}
+
+.carousel-caption {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 10;
+      padding-top: 20px;
+      padding-bottom: 20px;
+      color: #fff;
+      text-align: center;
+      background: rgba(0,0,0,0.4);
+    }
+</style>
+
+<script>
+var bandImages = new Array();
+bandImages[0] = '/s/img1.jpg';
+bandImages[1] = '/s/img2.jpg';
+bandImages[2] = '/s/img3.jpg';
+bandImages[3] = '/s/img4.jpg';
+bandImages[4] = '/s/img5.jpg';
+bandImages[5] = '/s/img6.jpg';
+bandImages[6] = '/s/img7.jpg';
+bandImages[7] = '/s/img8.jpg';
+bandImages[8] = '/s/img9.jpg';
+bandImages[9] = '/s/img10.jpg';
+bandImages[10] = '/s/img11.jpg';
+
+$.getJSON("https://www.eventbrite.com/venue/api/feeds/venue/424.json", function (data) {
+// these variable are for making sure "today" is the first date to be listed, as
+// the JSON feed often incorrectly lists yesterday as the first date.
+    var today = new Date();
+    today = moment
+      .utc(today)
+      .format("YYYY-MM-DD");
+    var yesterday = moment
+      .utc(today)
+      .subtract(1, 'day')
+      .format("YYYY-MM-DD");
+
+    //get the first item of the array
+    var firstItem = data.slice(0, 1);
+    //get only the date value of the first item
+    firstDate = firstItem[0].starts_at;
+    //format firstDate the way we need it.
+    firstDate = moment
+      .utc(firstDate)
+      .format("YYYY-MM-DD");
+    // get the date of the first date PLUS 7 days.  This will be our breakpoint.
+    // Check first to see if firstDate is yesterday, if so, compensate.
+    if (firstDate == yesterday) {
+      var breakpoint = moment
+        .utc(firstDate)
+        .add(8, 'day')
+        .format("YYYY-MM-DD");
+    } else {
+      var breakpoint = moment
+        .utc(firstDate)
+        .add(7, 'day')
+        .format("YYYY-MM-DD");
+    }
+
+    var output = '<div class="container"><div class="row"><div class="col-md-8"><div id="carousel-' +
+        'example-generic" class="carousel slide" data-ride="carousel" data-interval="4000' +
+        '"><div class="carousel-inner" role="listbox" style=" width:100%; height: 500px !' +
+        'important;">';
+    //loop through the first 7 days in the JSON feed
+    var counter = 0;
+    $.each(data, function (key, val) {
+      // if the first date is yesterday, go straight to the item item in the feed
+      // without rendering anything.
+      if (val.starts_at == yesterday) {
+        return true;
+      }
+      //break out of the loop if we've hit the breakpoint.
+      if (val.starts_at == breakpoint) {
+        return false;
+      }
+      //format the starts_at value to display a better output (using moment.js)
+      var myDate = moment
+        .utc(val.starts_at)
+        .format("dddd, MMMM Do");
+      if (counter == 0) {
+        output += '<div class="item active">';
+      } else {
+        output += '<div class="item">';
+      }
+      if (val.poster !== null) {
+        output += '<img src="';
+        output += val.poster;
+        output += '" alt="petes.jpg">';
+      } else {
+        var randomNum = Math.floor(Math.random() * bandImages.length);
+        output += '<img src="';
+        output += bandImages[randomNum];
+        output += '">';
+
+      }
+      output += '<div class="carousel-caption">';
+      output += '<h2><span>';
+      output += myDate;
+      output += '</span></h2><h2><span>';
+      output += val.title;
+      output += '</span></h2><br>';
+
+      // output += '<h1>'; output += val.title; output += '</h1>'; output += '<p>';
+      // output += myDate; output += '</p>';
+      output += '</div></div>';
+      counter++;
+    });
+
+    output += '</div>';
+    output += '<a class="left carousel-control" href="#carousel-example-generic" role="button" ' +
+        'data-slide="prev">';
+    output += '<span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>';
+    output += '<span class="sr-only">Previous</span>';
+    output += '</a>';
+    output += '<a class="right carousel-control" href="#carousel-example-generic" role="button"' +
+        ' data-slide="next">';
+    output += '<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>';
+    output += '<span class="sr-only">Next</span>';
+    output += '</a></div></div></div></div>';
+
+    //render to the DOM
+    $('#update').html(output);
+
+  });
+</script>
+
